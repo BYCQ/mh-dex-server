@@ -4,8 +4,10 @@
     (:use :cl)
     (:export :get-weapon-entries
              :ensure-weapon-list)))
-
 (in-package :mh-dex.weapon)
+
+(defparameter *weapons* nil
+  "An array of all dex weapons."
 
 
 
