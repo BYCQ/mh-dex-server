@@ -4,8 +4,9 @@
     (:use :cl)
     (:import-from :alexandria
 		  :with-gensyms)
-    (:export :get-weapon-entries
-             :ensure-weapon-list)))
+    (:export :do-query
+             :with-dex-queries
+             :lang-text)))
 (in-package :mh-dex.common)
 
 ;; -------------------- Constants --------------------
@@ -14,7 +15,6 @@
   (merge-pathnames "data/mhx.db"
                    (asdf:system-source-directory :mh-dex))
   "The path to the dex SQLite databse for Monster Hunter X.")
-
 
 ;; -------------------- Helpers --------------------
 
@@ -44,21 +44,17 @@
       `(sqlite:with-open-database (,database *dex-database-path*)
   	 (let ,(mapcar (lambda (binding)
   			 (list (car binding)
-  			       `(do-query ,database ,@(rest binding)))))
-  	   ,@body)))))
+  			       `(do-query ,database ,@(rest binding))))
+                       query-bindings)
+  	   ,@body))))
 
+  (defmacro lang-text (&key (en nil) (zh nil) (jp nil))
+    `(list ,@(when en (list :en en))
+           ,@(when zh (list :zh zh))
+           ,@(when jp (list :jp jp)))))
 
-;; -------------------- Structs/Classes --------------------
-
-;; (defclass weapon ()
-;;   ((dex-id :type (unsigned-byte 32) :initarg :dex-id)
-;;    (type-id :type (unsigned-byte 8) :initarg :type-id)
-;;    (base-id :type (unsigned-byte 16) :initarg :base-id)
-;;    (level :type (unsigned-byte 8 :initarg :level)
-;;    (attack :type (unsigned-byte 32) :initarg :attack))))
-
-
-
+      
+                    
 
 
 
