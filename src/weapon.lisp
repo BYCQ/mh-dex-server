@@ -80,8 +80,8 @@
   "Reload the variable *weapons* which contains all the weapon
    information."
   ;; First, clear the *weapons* array.
-  (loop for array across *weapons*
-     do (setf array nil))
+  (loop for i below (length *weapons*)
+     do (setf (aref *weapons* i) nil))
   
   ;; Load the data from the Dex database.
   (with-dex-queries ((weapons (:select "DB_Wpn.Wpn_ID" "Wpn_Type_ID"
@@ -98,6 +98,9 @@
                               (:inner-join "ID_Wpn_Name" "DB_Wpn.Wpn_ID = ID_Wpn_Name.Wpn_ID")
                               (:order-by "Wpn_Type_ID" "DB_Wpn.Wpn_ID")))
     (loop 
+       ;; Stack element is (count weapon), where count means how many
+       ;; remaining children there are for this weapon.
+       with stack = nil
        with id = 0
        for previous-dex-type-id = -1 then dex-type-id
        for (dex-id ;; unused
@@ -128,11 +131,25 @@
                                          (list special-1 special-2)
                                          (list special-1-points special-2-points))
                         :defense defense
+                        :children nil
                         :sharpness (list :blocks (parse-sharpness sharpness)
                                          :plus (if (= 1 dex-type-id) t :false))
                         :price (list :produce produce-price :upgrade upgrade-price))
-                  (aref *weapons* type-id))))
-
+                  (aref *weapons* type-id))
+            ;; Make the child-parent connection. Decrease the children
+            ;; count for the parent (i.e. stack top).
+            (when stack 
+              (push id (getf (cadar stack) :children))
+              (decf (caar stack)))
+            (if (> child 0) 
+                (push (list child (car (aref *weapons* type-id)))
+                      stack)
+                (loop while (and stack (= (caar stack) 0))
+                   do (let ((children (getf (cadar stack) :children)))
+                        (setf (getf (cadar stack) :children)
+                              (nreverse children))
+                        (pop stack))))))
+         
     ;; Reverse the lists of each weapon type.
     (loop for type-id below (length *weapons*)
        do (setf (aref *weapons* type-id)
