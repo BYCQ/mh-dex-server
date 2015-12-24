@@ -6,7 +6,8 @@
                   :def-service)
     (:import-from :mh-dex.weapon
                   :reload-weapons
-                  :get-weapon-list)
+                  :get-weapon-list
+                  :get-weapon-type-list)
     (:export :dex
              :init-server)
     (:use :cl)))
@@ -32,8 +33,13 @@
        (init-server)
        ,@body)))
 
+(def-dex-service environment ()
+  (list :weapontypes (get-weapon-type-list)))
+
 (def-dex-service weapon-list (type)
   (get-weapon-list (parse-integer type)))
+
+
 
 (def-app dex ()
   :title "Ping's Dex"

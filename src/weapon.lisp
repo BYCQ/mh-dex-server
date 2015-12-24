@@ -7,6 +7,7 @@
                   :lang-text)
     (:export :*weapons*
              :get-weapon-list
+             :get-weapon-type-list
              :reload-weapons)))
 (in-package :mh-dex.weapon)
 
@@ -159,3 +160,8 @@
 (defun get-weapon-list (type)
   "Return the list of the weapons of the specified type."
   (aref *weapons* type))
+
+(defun get-weapon-type-list ()
+  "Return the list of all weapon types, which is a list of their names
+   in different languages."
+  +weapon-types+)
