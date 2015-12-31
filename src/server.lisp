@@ -7,7 +7,13 @@
     (:import-from :mh-dex.weapon
                   :reload-weapons
                   :get-weapon-list
-                  :get-weapon-type-list)
+                  :get-weapon-type-list
+                  :get-special-type-list
+                  :get-sharpness-color-list)
+    (:import-from :mh-dex.item
+                  :reload-items
+                  :get-item-type-list
+                  :get-item-list)
     (:export :dex
              :init-server)
     (:use :cl)))
@@ -23,6 +29,7 @@
     "Load all the data from the Dex databse to initialzie the server."
     (unless *initialized*
       (reload-weapons)
+      (reload-items)
       (setf *initialized* t))))
 
 ;; -------------------- RPCs --------------------
@@ -34,12 +41,16 @@
        ,@body)))
 
 (def-dex-service environment ()
-  (list :weapontypes (get-weapon-type-list)))
+  (list :weapontypes (get-weapon-type-list)
+        :specialtypes (get-special-type-list)
+        :sharpnesscolors (get-sharpness-color-list)
+        :itemtypes (get-item-type-list)))
 
 (def-dex-service weapon-list (type)
   (get-weapon-list (parse-integer type)))
 
-
+(def-dex-service item-list ()
+  (get-item-list))
 
 (def-app dex ()
   :title "Ping's Dex"
