@@ -4,13 +4,16 @@
     (:use :cl)
     (:import-from :mh-dex.common
                   :with-dex-queries
-                  :lang-text)
+                  :lang-text
+                  :make-weapon-key
+                  :make-item-key)
     (:export :*weapons*
              :get-weapon-list
              :get-weapon-type-list
              :get-sharpness-color-list
              :get-special-type-list
-             :reload-weapons)))
+             :reload-weapons
+             :ensure-weapons-loaded)))
 (in-package :mh-dex.weapon)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -165,7 +168,7 @@
                                 (:from "DB_ItmtoWpn")))
     (let ((material-table (make-hash-table)))
       (loop for (dex-id item-id quantity type) in materials
-         do (push (list :itemid (1- item-id)
+         do (push (list :itemkey (make-item-key (1- item-id))
                         :quantity quantity)
                   ;; Use Dex ID here as it is what will be used to
                   ;; fetch the data below.
@@ -195,6 +198,7 @@
                   (setf id 0))
               (push (list :type type-id
                           :id id
+                          :key (make-weapon-key type-id id)
                           :rare rare
                           :name (lang-text :en en :zh zh :jp jp)
                           :attack attack
@@ -212,7 +216,7 @@
                           :sharpness (list :blocks (parse-sharpness sharpness)
                                            :plus (if (= 1 dex-type-id) t :false))
                           :from (if stack
-                                    (getf (cadar stack) :id)
+                                    (getf (cadar stack) :key)
                                     :null)
                           :material (gethash dex-id material-table nil)
                           :price (list :produce produce-price :upgrade upgrade-price))
@@ -238,6 +242,13 @@
   (format t "[ ok ] Weapons loaded, total: ~a~%"
           (loop for weapons across *weapons*
              sum (length weapons))))
+
+(declaim (inline ensure-weapons-loaded))
+(defun ensure-weapons-loaded ()
+  "Make sure that reload-weapon is already excuted and *weapons* has
+   valid data. Call reload-weapons if not."
+  (unless (loop for weapons across *weapons* always weapons)
+    (reload-weapons)))
 
 (defun get-weapon-list (type)
   "Return the list of the weapons of the specified type."

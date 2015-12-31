@@ -53,6 +53,12 @@
            ,@(when zh (list :zh zh))
            ,@(when jp (list :jp jp)))))
 
+(defun make-item-key (id)
+  (format nil "~4,'0d" id))
+
+(defun make-weapon-key (type id)
+  (format nil "~2,'0d.~4,'0d" type id))
+
       
                     
 

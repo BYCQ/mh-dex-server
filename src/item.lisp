@@ -4,7 +4,11 @@
     (:use :cl)
     (:import-from :mh-dex.common
                   :with-dex-queries
+                  :make-item-key
                   :lang-text)
+    (:import-from :mh-dex.weapon
+                  :ensure-weapons-loaded
+                  :*weapons*)
     (:export :*items*
              :reload-items
              :get-item-type-list
@@ -75,8 +79,8 @@
   (loop for (item1 item2 production success-rate quantity)
      in combos
      when (= dex-id production)
-     collect (list :a (1- item1)
-                   :b (1- item2)
+     collect (list :a (make-item-key (1- item1))
+                   :b (make-item-key (1- item2))
                    :rate success-rate
                    :quantity quantity)))
 
@@ -86,8 +90,7 @@
   (loop for (item1 item2 production success-rate quantity)
      in combos
      when (or (= item1 dex-id) (= item2 dex-id))
-     collect (1- production)))
-  
+     collect (make-item-key (1- production))))
 
 (defun reload-items ()
   "Reload the variable *items* which contains all the item
@@ -96,7 +99,10 @@
   ;; Clear the *items* list.
   (setf *items* nil)
 
-  (let ((item-icon-map (make-hash-table)))
+  (ensure-weapons-loaded)
+
+  (let ((item-icon-map (make-hash-table))
+        (item-weapon-map (make-hash-table :test #'equal)))
     ;; Load the item id to icon-id map.
     (with-open-file (input *item-icon-path*
                            :direction :input
@@ -105,6 +111,16 @@
          while entry
          do (setf (gethash (car entry) item-icon-map)
                   (cadr entry))))
+
+    (loop for weapon-type below (length *weapons*)
+       do (loop for weapon in (aref *weapons* weapon-type)
+             do
+               (loop for entry in (append (getf (getf weapon :material) :produce)
+                                          (getf (getf weapon :material) :upgrade))
+                  do (push (getf weapon :key)
+                           (gethash (getf entry :itemkey)
+                                    item-weapon-map 
+                                    nil)))))
 
     ;; Load the data from the Dex database.
     (with-dex-queries ((items (:select "DB_Itm.Itm_ID" "Rare" "Sell" "Buy" "Max"
@@ -122,11 +138,13 @@
               sell-price buy-price
               carry ;; maximum carry quantity
               en zh jp) in items
-         do (let ((type (identify-item-type id)))
+         do (let ((type (identify-item-type id))
+                  (key (make-item-key id)))
               ;; Make sure that there is no missing item ids in Dex.
               (assert (= (1+ id) dex-id))
               (when (> type -1)
                 (push (list :id id
+                            :key (make-item-key id)
                             :type type
                             :rare rare
                             :name (lang-text :en (or en jp)
@@ -135,9 +153,11 @@
                             :price (list :sell sell-price :buy buy-price)
                             :carry carry
                             :acquire (list :combo (find-combo-list-to-produce dex-id combos))
-                            :usage (list :combo (find-item-list-can-be-produced-from dex-id combos))
+                            :usage (list :combo (find-item-list-can-be-produced-from dex-id combos)
+                                         :weapon (gethash (make-item-key id)
+                                                          item-weapon-map
+                                                          nil))
                             :iconid (gethash id item-icon-map))
-
                       *items*))))))
 
   (setf *items* (nreverse *items*))
