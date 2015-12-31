@@ -160,61 +160,76 @@
                                        "ProPx" "LvUpPx")
                               (:from "DB_Wpn")
                               (:inner-join "ID_Wpn_Name" "DB_Wpn.Wpn_ID = ID_Wpn_Name.Wpn_ID")
-                              (:order-by "Wpn_Type_ID" "DB_Wpn.Wpn_ID")))
-    (loop 
-       ;; Stack element is (count weapon), where count means how many
-       ;; remaining children there are for this weapon.
-       with stack = nil
-       with id = 0
-       for previous-dex-type-id = -1 then dex-type-id
-       for (dex-id ;; unused
-            dex-type-id
-            en zh jp 
-            rare child
-            attack affinity
-            special-1 special-1-points special-2 special-2-points
-            defense
-            slot
-            sharpness sharpness-plus
-            produce-price upgrade-price) in weapons
-       do (let ((type-id (1- dex-type-id)))
-            ;; Reset the id when starting a new type.
-            (if (= previous-dex-type-id dex-type-id)
-                (incf id)
-                (setf id 0))
-            (push (list :type type-id
-                        :id id
-                        :rare rare
-                        :name (lang-text :en en :zh zh :jp jp)
-                        :attack attack
-                        :affinity (round (* 100 affinity))
-                        :special (mapcan (lambda (special points)
-                                           (when (plusp special)
-                                             (list (list :special (1- special)
-                                                         :points points))))
-                                         (list special-1 special-2)
-                                         (list special-1-points special-2-points))
-                        :depth (length stack)
-                        :defense defense
-                        :slots slot
-                        :children nil
-                        :sharpness (list :blocks (parse-sharpness sharpness)
-                                         :plus (if (= 1 dex-type-id) t :false))
-                        :price (list :produce produce-price :upgrade upgrade-price))
-                  (aref *weapons* type-id))
-            ;; Make the child-parent connection. Decrease the children
-            ;; count for the parent (i.e. stack top).
-            (when stack 
-              (push id (getf (cadar stack) :children))
-              (decf (caar stack)))
-            (if (> child 0) 
-                (push (list child (car (aref *weapons* type-id)))
-                      stack)
-                (loop while (and stack (= (caar stack) 0))
-                   do (let ((children (getf (cadar stack) :children)))
-                        (setf (getf (cadar stack) :children)
-                              (nreverse children))
-                        (pop stack))))))
+                              (:order-by "Wpn_Type_ID" "DB_Wpn.Wpn_ID"))
+                     (materials (:select "Wpn_ID" "Itm_ID" "Qty" "Type")
+                                (:from "DB_ItmtoWpn")))
+    (let ((material-table (make-hash-table)))
+      (loop for (dex-id item-id quantity type) in materials
+         do (push (list :itemid (1- item-id)
+                        :quantity quantity)
+                  ;; Use Dex ID here as it is what will be used to
+                  ;; fetch the data below.
+                  (getf (gethash dex-id material-table nil)
+                        (if (equal type "P") :produce :upgrade))))
+
+      (loop
+         ;; Stack element is (count weapon), where count means how many
+         ;; remaining children there are for this weapon.
+         with stack = nil
+         with id = 0
+         for previous-dex-type-id = -1 then dex-type-id
+         for (dex-id
+              dex-type-id
+              en zh jp 
+              rare child
+              attack affinity
+              special-1 special-1-points special-2 special-2-points
+              defense
+              slot
+              sharpness sharpness-plus
+              produce-price upgrade-price) in weapons
+         do (let ((type-id (1- dex-type-id)))
+              ;; Reset the id when starting a new type.
+              (if (= previous-dex-type-id dex-type-id)
+                  (incf id)
+                  (setf id 0))
+              (push (list :type type-id
+                          :id id
+                          :rare rare
+                          :name (lang-text :en en :zh zh :jp jp)
+                          :attack attack
+                          :affinity (round (* 100 affinity))
+                          :special (mapcan (lambda (special points)
+                                             (when (plusp special)
+                                               (list (list :special (1- special)
+                                                           :points points))))
+                                           (list special-1 special-2)
+                                           (list special-1-points special-2-points))
+                          :depth (length stack)
+                          :defense defense
+                          :slots slot
+                          :children nil
+                          :sharpness (list :blocks (parse-sharpness sharpness)
+                                           :plus (if (= 1 dex-type-id) t :false))
+                          :from (if stack
+                                    (getf (cadar stack) :id)
+                                    :null)
+                          :material (gethash dex-id material-table nil)
+                          :price (list :produce produce-price :upgrade upgrade-price))
+                    (aref *weapons* type-id))
+              ;; Make the child-parent connection. Decrease the children
+              ;; count for the parent (i.e. stack top).
+              (when stack 
+                (push id (getf (cadar stack) :children))
+                (decf (caar stack)))
+              (if (> child 0) 
+                  (push (list child (car (aref *weapons* type-id)))
+                        stack)
+                  (loop while (and stack (= (caar stack) 0))
+                     do (let ((children (getf (cadar stack) :children)))
+                          (setf (getf (cadar stack) :children)
+                                (nreverse children))
+                          (pop stack)))))))
     
     ;; Reverse the lists of each weapon type.
     (loop for type-id below (length *weapons*)
