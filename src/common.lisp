@@ -6,6 +6,9 @@
 		  :with-gensyms)
     (:export :do-query
              :with-dex-queries
+             :make-item-key
+             :make-weapon-key
+             :make-quest-key
              :lang-text)))
 (in-package :mh-dex.common)
 
@@ -58,6 +61,9 @@
 
 (defun make-weapon-key (type id)
   (format nil "~2,'0d.~4,'0d" type id))
+
+(defun make-quest-key (id)
+  (format nil "~4,'0d" id))
 
       
                     

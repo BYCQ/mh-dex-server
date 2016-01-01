@@ -14,6 +14,9 @@
                   :reload-items
                   :get-item-type-list
                   :get-item-list)
+    (:import-from :mh-dex.quest
+                  :reload-quests
+                  :get-quest-list)
     (:export :dex
              :init-server)
     (:use :cl)))
@@ -21,16 +24,16 @@
 
 ;; -------------------- Operations --------------------
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *initialized* nil
-    "Inidicating that the server is fully initialized.")
+(defparameter *initialized* nil
+  "Inidicating that the server is fully initialized.")
 
-  (defun init-server ()
-    "Load all the data from the Dex databse to initialzie the server."
-    (unless *initialized*
-      (reload-weapons)
-      (reload-items)
-      (setf *initialized* t))))
+(defun init-server ()
+  "Load all the data from the Dex databse to initialzie the server."
+  (unless *initialized*
+    (reload-weapons)
+    (reload-items)
+    (reload-quests)
+    (setf *initialized* t)))
 
 ;; -------------------- RPCs --------------------
 
@@ -51,6 +54,9 @@
 
 (def-dex-service item-list ()
   (get-item-list))
+
+(def-dex-service quest-list ()
+  (get-quest-list))
 
 (def-app dex ()
   :title "Ping's Dex"
