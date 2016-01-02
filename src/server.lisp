@@ -26,6 +26,9 @@
     (:import-from :mh-dex.monster
                   :reload-monsters
                   :get-monster-list)
+    (:import-from :mh-dex.jewel
+                  :reload-jewels
+                  :get-jewel-list)
     (:export :dex
              :init-server)
     (:use :cl)))
@@ -45,6 +48,7 @@
     (reload-quests)
     (reload-armors)
     (reload-monsters)
+    (reload-jewels)
     (setf *initialized* t)))
 
 ;; -------------------- RPCs --------------------
@@ -78,6 +82,9 @@
 
 (def-dex-service monster-list ()
   (get-monster-list))
+
+(def-dex-service jewel-list ()
+  (get-jewel-list))
 
 (def-app dex ()
   :title "Ping's Dex"

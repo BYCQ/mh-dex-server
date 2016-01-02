@@ -11,6 +11,7 @@
              :make-quest-key
              :make-skill-key
              :make-monster-key
+             :make-jewel-key
              :lang-text)))
 (in-package :mh-dex.common)
 
@@ -75,4 +76,8 @@
 
 (defun make-monster-key (id)
   (format nil "~3,'0d" id))
+
+(defun make-jewel-key (id)
+  (format nil "~3,'0d" id))
+
 
