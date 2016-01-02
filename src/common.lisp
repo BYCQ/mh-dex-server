@@ -54,9 +54,9 @@
   	   ,@body))))
 
   (defmacro lang-text (&key (en nil) (zh nil) (jp nil))
-    `(list ,@(if en (list :en en) (list :en jp))
-           ,@(if zh (list :zh zh) (list :zh jp))
-           ,@(when jp (list :jp jp)))))
+    `(list ,@(list :en `(if ,en ,en ,jp))
+           ,@(list :zh `(if ,zh ,zh ,jp))
+           ,@(list :jp jp))))
 
 (defun make-item-key (id)
   (format nil "~4,'0d" id))
