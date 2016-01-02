@@ -5,6 +5,7 @@
     (:import-from :mh-dex.common
                   :with-dex-queries
                   :make-jewel-key
+                  :make-skill-key
                   :lang-text)
     (:export :*jewels*
              :reload-jewels
@@ -17,9 +18,11 @@
   "Make a list whose elements are (:skill x :points x)."
   (let ((result nil))
     (unless (= skill-a -1)
-      (push (list :skill skill-a :points points-a) result))
+      (push (list :skill (make-skill-key (1- skill-a))
+                  :points points-a) result))
     (unless (= skill-b -1)
-      (push (list :skill skill-b :points points-b) result))
+      (push (list :skill (make-skill-key (1- skill-b))
+                  :points points-b) result))
     result))
 
 (defun reload-jewels ()
@@ -37,12 +40,13 @@
                              (:from "DB_Jew")
                              (:inner-join "ID_Itm_Name" "DB_Jew.Itm_ID = ID_Itm_Name.Itm_ID")
                              (:order-by "Jew_ID")))
-    (let ((jewel-skill-table (make-hash-table)))
+    (let ((jewel-skill-table (make-hash-table))) ;; unused
       (loop
          for id from 0
          for (dex-id en zh jp slots price skill-a points-a skill-b points-b)
          in jewels
          do (let ((key (make-jewel-key id)))
+              (assert (= (1- dex-id) id))
               (push (list :id id
                           :key key
                           :name (lang-text :en en :zh zh :jp jp)
