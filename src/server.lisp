@@ -17,6 +17,9 @@
     (:import-from :mh-dex.quest
                   :reload-quests
                   :get-quest-list)
+    (:import-from :mh-dex.armor
+                  :reload-armors
+                  :get-armor-list)
     (:export :dex
              :init-server)
     (:use :cl)))
@@ -33,6 +36,7 @@
     (reload-weapons)
     (reload-items)
     (reload-quests)
+    (reload-armors)
     (setf *initialized* t)))
 
 ;; -------------------- RPCs --------------------
@@ -57,6 +61,9 @@
 
 (def-dex-service quest-list ()
   (get-quest-list))
+
+(def-dex-service armor-list ()
+  (get-armor-list))
 
 (def-app dex ()
   :title "Ping's Dex"

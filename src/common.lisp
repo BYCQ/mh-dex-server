@@ -52,8 +52,8 @@
   	   ,@body))))
 
   (defmacro lang-text (&key (en nil) (zh nil) (jp nil))
-    `(list ,@(when en (list :en en))
-           ,@(when zh (list :zh zh))
+    `(list ,@(if en (list :en en) (list :en jp))
+           ,@(if zh (list :zh zh) (list :zh jp))
            ,@(when jp (list :jp jp)))))
 
 (defun make-item-key (id)
@@ -65,7 +65,8 @@
 (defun make-quest-key (id)
   (format nil "~4,'0d" id))
 
-      
+(defun make-armor-key (id)
+  (format nil "~4,'0d" id))
                     
 
 
