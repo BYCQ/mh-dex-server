@@ -20,6 +20,12 @@
     (:import-from :mh-dex.armor
                   :reload-armors
                   :get-armor-list)
+    (:import-from :mh-dex.skill
+                  :reload-skills
+                  :get-skill-list)
+    (:import-from :mh-dex.monster
+                  :reload-monsters
+                  :get-monster-list)
     (:export :dex
              :init-server)
     (:use :cl)))
@@ -33,10 +39,12 @@
 (defun init-server ()
   "Load all the data from the Dex databse to initialzie the server."
   (unless *initialized*
+    (reload-skills)
     (reload-weapons)
     (reload-items)
     (reload-quests)
     (reload-armors)
+    (reload-monsters)
     (setf *initialized* t)))
 
 ;; -------------------- RPCs --------------------
@@ -64,6 +72,12 @@
 
 (def-dex-service armor-list ()
   (get-armor-list))
+
+(def-dex-service skill-list ()
+  (get-skill-list))
+
+(def-dex-service monster-list ()
+  (get-monster-list))
 
 (def-app dex ()
   :title "Ping's Dex"

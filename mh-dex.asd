@@ -13,9 +13,11 @@
     :components ((:module "src" 
                           :components
                           ((:file "common")
+                           (:file "skill" :depends-on ("common"))
                            (:file "weapon" :depends-on ("common"))
                            (:file "item" :depends-on ("common" "weapon"))
                            (:file "quest" :depends-on ("common"))
                            (:file "armor" :depends-on ("common"))
+                           (:file "monster" :depends-on ("common"))
                            (:file "server" :depends-on ("weapon" "item")))))
     :description "Ping's Monster Hunter Dex server.")

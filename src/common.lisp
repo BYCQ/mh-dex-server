@@ -9,6 +9,8 @@
              :make-item-key
              :make-weapon-key
              :make-quest-key
+             :make-skill-key
+             :make-monster-key
              :lang-text)))
 (in-package :mh-dex.common)
 
@@ -67,10 +69,10 @@
 
 (defun make-armor-key (id)
   (format nil "~4,'0d" id))
-                    
 
+(defun make-skill-key (id)
+  (format nil "~4,'0d" id))
 
-
-
-
+(defun make-monster-key (id)
+  (format nil "~3,'0d" id))
 

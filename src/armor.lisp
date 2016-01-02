@@ -36,8 +36,8 @@
 
       ;; Prepare the hash table that maps armor (dex) ID to its
       ;; corresponding skill sets.
-      (loop for (dex-id skill-tree-id points) in skills
-         do (push (list :skilltree skill-tree-id
+      (loop for (dex-id skill-system-id points) in skills
+         do (push (list :skilltree skill-system-id
                         :points points)
                   (gethash dex-id armor-skill-table nil)))
 
