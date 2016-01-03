@@ -92,7 +92,12 @@
   (loop for (item1 item2 production success-rate quantity)
      in combos
      when (or (= item1 dex-id) (= item2 dex-id))
-     collect (make-item-key (1- production))))
+     collect (list :b (if (= item1 dex-id)
+                          (make-item-key (1- item2))
+                          (make-item-key (1- item1)))
+                   :c (make-item-key (1- production))
+                   :rate success-rate
+                   :quantity quantity)))
 
 (defun reload-items ()
   "Reload the variable *items* which contains all the item

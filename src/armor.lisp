@@ -5,6 +5,8 @@
     (:import-from :mh-dex.common
                   :with-dex-queries
                   :make-armor-key
+                  :make-skill-key
+                  :make-used-item-map
                   :lang-text)
     (:export :*armors*
              :reload-armors
@@ -30,14 +32,17 @@
                              (:from "DB_Amr")
                              (:inner-join "ID_Amr_Name" "DB_Amr.Amr_ID = ID_Amr_Name.Amr_ID")
                              (:order-by "DB_Amr.Amr_ID"))
+                     (items (:select "Amr_ID" "Itm_ID" "Qty")
+                            (:from "DB_ItmtoAmr"))
                      (skills (:select "Amr_ID" "SklTree_ID" "Pt")
                              (:from "DB_SklTreetoAmr")))
-    (let ((armor-skill-table (make-hash-table)))
+    (let ((armor-skill-table (make-hash-table))
+          (used-item-map (make-used-item-map items)))
 
       ;; Prepare the hash table that maps armor (dex) ID to its
       ;; corresponding skill sets.
       (loop for (dex-id skill-system-id points) in skills
-         do (push (list :skilltree skill-system-id
+         do (push (list :key (make-skill-key skill-system-id)
                         :points points)
                   (gethash dex-id armor-skill-table nil)))
 
@@ -60,6 +65,7 @@
                           :price price
                           :resist (list :fire fire :water water :thunder thunder
                                         :ice ice :dragon dragon)
+                          :material (gethash dex-id used-item-map nil)
                           :skillset (gethash dex-id armor-skill-table nil))
                     *armors*)))))
 
