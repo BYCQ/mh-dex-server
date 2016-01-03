@@ -5,6 +5,8 @@
     (:import-from :mh-dex.common
                   :with-dex-queries
                   :make-skill-key
+                  :make-jewel-key
+                  :make-armor-key
                   :lang-text)
     (:export :*skills*
              :reload-skills
@@ -34,9 +36,27 @@
                                   (:from "DB_Skl")
                                   (:inner-join "ID_Skl_Name" "DB_Skl.Skl_ID = ID_Skl_Name.Skl_ID")
                                   (:where "SklTree_ID > 0")
-                                  (:order-by "SklTree_ID" "Pt")))
+                                  (:order-by "SklTree_ID" "Pt"))
+                     (armors (:select "Amr_ID" "SklTree_ID" "Pt")
+                             (:from "DB_SklTreetoAmr"))
+                     (jewels (:select "Jew_ID" "SklTree_ID" "Pt")
+                             (:from "DB_SklTreetoJew")))
+    (let ((system-skill-table (make-hash-table))
+          (armors-table (make-hash-table))
+          (jewels-table (make-hash-table)))
 
-    (let ((system-skill-table (make-hash-table)))
+      (loop for (armor-dex-id dex-id points) in armors
+         when (> points 0)
+         do (push (list :key (make-armor-key (1- armor-dex-id))
+                        :points points)
+                  (gethash dex-id armors-table nil)))
+      
+      (loop for (jewel-dex-id dex-id points) in jewels
+         when (> points 0)
+         do (push (list :key (make-jewel-key (1- jewel-dex-id))
+                        :points points)
+                  (gethash dex-id jewels-table nil)))
+      
       (loop
          for (unused en zh jp dex-id points) in real-skills
          do (push (list :name (lang-text :en en :zh zh :jp jp)
@@ -51,6 +71,10 @@
               (push (list :id id
                           :key key
                           :name (lang-text :en en :zh zh :jp jp)
+                          :jewels (sort (gethash dex-id jewels-table)
+                                        (lambda (x y) (> (getf x :points) (getf y :points))))
+                          :armors (sort (gethash dex-id armors-table)
+                                        (lambda (x y) (> (getf x :points) (getf y :points))))
                           :list (gethash dex-id system-skill-table nil))
                     *skills*)))))
 
