@@ -10,9 +10,11 @@
                   :ensure-weapons-loaded
                   :*weapons*)
     (:export :*items*
+             :*item-icon-path*
              :reload-items
              :get-item-type-list
-             :get-item-list)))
+             :get-item-list
+             :ensure-items-loaded)))
 (in-package :mh-dex.item)
 
 ;; TODO(breakds): Ask Ping what items should be masked out.
@@ -163,6 +165,12 @@
   (setf *items* (nreverse *items*))
   (format t "[ ok ] Items loaded, total: ~a~%"
           (length *items*)))
+
+(declaim (inline ensure-items-loaded))
+(defun ensure-items-loaded ()
+  "Make sure that reload-items is already excuted and *items* has
+   valid data. Call reload-items if not."
+  (unless *items* (reload-items)))
 
 (defun get-item-type-list () +item-types+)
 

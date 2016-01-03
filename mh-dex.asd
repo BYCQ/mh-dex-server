@@ -14,9 +14,9 @@
                           :components
                           ((:file "common")
                            (:file "skill" :depends-on ("common"))
-                           (:file "jewel" :depends-on ("common"))
                            (:file "weapon" :depends-on ("common"))
                            (:file "item" :depends-on ("common" "weapon"))
+                           (:file "jewel" :depends-on ("common" "skill" "item"))
                            (:file "quest" :depends-on ("common"))
                            (:file "armor" :depends-on ("common"))
                            (:file "monster" :depends-on ("common"))

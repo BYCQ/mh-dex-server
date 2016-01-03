@@ -8,7 +8,8 @@
                   :lang-text)
     (:export :*skills*
              :reload-skills
-             :get-skill-list)))
+             :get-skill-list
+             :ensure-skills-loaded)))
 (in-package :mh-dex.skill)
 
 (defparameter *skills* nil)
@@ -57,8 +58,13 @@
 
   (format t "[ ok ] Skills loaded, total: ~a~%" (length *skills*)))
   
+(declaim (inline ensure-skills-loaded))
+(defun ensure-skills-loaded ()
+  "Make sure that reload-skills is already excuted and *skills* has
+   valid data. Call reload-skills if not."
+  (unless *skills* (reload-skills)))
+
 (defun get-skill-list () *skills*)
-    
 
 
 

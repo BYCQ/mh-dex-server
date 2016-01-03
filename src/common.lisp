@@ -6,6 +6,7 @@
 		  :with-gensyms)
     (:export :do-query
              :with-dex-queries
+             :make-used-item-map
              :make-item-key
              :make-weapon-key
              :make-quest-key
@@ -58,6 +59,16 @@
     `(list ,@(list :en `(if ,en ,en ,jp))
            ,@(list :zh `(if ,zh ,zh ,jp))
            ,@(list :jp jp))))
+
+(defun make-used-item-map (entries)
+  "Make a hashtable that maps id to a list of items with
+   quantity. This is for item usage tables."
+  (let ((result (make-hash-table)))
+    (loop for (dex-id item-dex-id quantity) in entries
+       do (push (list :itemkey (make-item-key (1- item-dex-id))
+                      :quantity quantity)
+                (gethash dex-id result nil)))
+    result))
 
 (defun make-item-key (id)
   (format nil "~4,'0d" id))
