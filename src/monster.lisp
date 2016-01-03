@@ -6,6 +6,7 @@
                   :with-dex-queries
                   :make-monster-key
                   :make-item-key
+                  :make-quest-key
                   :lang-text)
     (:export :*monsters*
              :reload-monsters
@@ -26,6 +27,11 @@
                                (:from "ID_Mon_Name")
                                (:where "Mon_ID > -1")
                                (:order-by "Mon_ID"))
+                     (quests (:select "Qst_ID"
+                                      "Mon1_ID" "Mon2_ID" "Mon3_ID" "Mon4_ID"
+                                      "Mon5_ID" "Mon6_ID" "Mon7_ID" "Mon8_ID")
+                             (:from "DB_Qst")
+                             (:order-by "-Qst_Lv_ID"))
                      (items (:select "Mon_ID" "Itm_ID" "Qty"
                                      "Pct" "Rank_ID"
                                      ;; names: 0 = en, 1 = zh, 3 = jp
@@ -35,14 +41,24 @@
                             (:from "DB_ItmtoMon")
                             (:inner-join "ID_Mon_GetItmType"
                                          "DB_ItmtoMon.Mon_GetItmType_ID = Id_Mon_GetItmType.Mon_GetItmType_ID")))
-    (let ((items-table (make-hash-table)))
+    (let ((items-table (make-hash-table))
+          (quests-table (make-hash-table)))
+
       (loop for (dex-id dex-item-id quantity probability rank en zh jp)
          in items
          do (push (list :key (make-item-key (1- dex-item-id))
                         :probability (round (* probability 100))
                         :rank rank
+                        :quantity quantity
                         :approach (lang-text :en en :zh zh :jp jp))
                   (gethash dex-id items-table nil)))
+
+      (loop
+         for ids in quests
+         for dex-quest-id = (car ids)
+         do (loop for dex-id in (rest ids)
+               do (push (list :key (make-quest-key (1- dex-quest-id)))
+                        (gethash dex-id quests-table nil))))
       
       (loop
          for id from 0
@@ -52,6 +68,7 @@
               (push (list :id id
                           :key key
                           :items (gethash dex-id items-table)
+                          :quests (gethash dex-id quests-table)
                           :name (lang-text :en en :zh zh :jp jp))
                     *monsters*)))))
   
