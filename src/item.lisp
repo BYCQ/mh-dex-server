@@ -5,6 +5,10 @@
     (:import-from :mh-dex.common
                   :with-dex-queries
                   :make-item-key
+                  :make-armor-key
+                  :make-quest-key
+                  :make-monster-key
+                  :make-jewel-key
                   :lang-text)
     (:import-from :mh-dex.weapon
                   :ensure-weapons-loaded
@@ -137,35 +141,74 @@
                               (:inner-join "ID_Itm_Name" "DB_Itm.Itm_ID = ID_Itm_Name.Itm_ID")
                               (:order-by "DB_Itm.Itm_ID"))
                        (combos (:select "ItmA_ID" "ItmB_ID" "ItmC_ID" "Succ" "Qty")
-                               (:from "DB_ItmtoCbo")))
-      (loop
-         for id from 0
-         for (dex-id
-              rare
-              sell-price buy-price
-              carry ;; maximum carry quantity
-              en zh jp) in items
-         do (let ((type (identify-item-type id))
-                  (key (make-item-key id)))
-              ;; Make sure that there is no missing item ids in Dex.
-              (assert (= (1+ id) dex-id))
-              (when (> type -1)
-                (push (list :id id
-                            :key (make-item-key id)
-                            :type type
-                            :rare rare
-                            :name (lang-text :en (or en jp)
-                                             :zh (or zh jp)
-                                             :jp jp)
-                            :price (list :sell sell-price :buy buy-price)
-                            :carry carry
-                            :acquire (list :combo (find-combo-list-to-produce dex-id combos))
-                            :usage (list :combo (find-item-list-can-be-produced-from dex-id combos)
-                                         :weapon (gethash (make-item-key id)
-                                                          item-weapon-map
-                                                          nil))
-                            :iconid (gethash id item-icon-map))
-                      *items*))))))
+                               (:from "DB_ItmtoCbo"))
+                       (armors (:select "Amr_ID" "Itm_ID")
+                               (:from "DB_ItmtoAmr"))
+                       (jewels (:select "Jew_ID" "Itm_ID")
+                               (:from "DB_ItmtoJew"))
+                       (monsters (:select "Mon_ID" "Itm_ID")
+                                 (:from "DB_ItmtoMon"))
+                       (quests (:select "Qst_ID" "Itm_ID")
+                               (:from "DB_ItmtoQst")))
+
+      (let ((equal-key (lambda (x y) (equal (getf x :key) (getf y :key))))
+            (armors-table (make-hash-table))
+            (jewels-table (make-hash-table))
+            (monsters-table (make-hash-table))
+            (quests-table (make-hash-table)))
+
+        (loop for (dex-armor-id dex-id) in armors
+           do (push (list :key (make-armor-key (1- dex-armor-id)))
+                    (gethash dex-id armors-table)))
+
+        (loop for (dex-jewel-id dex-id) in jewels
+           do (push (list :key (make-jewel-key (1- dex-jewel-id)))
+                    (gethash dex-id jewels-table)))
+
+        (loop for (dex-monster-id dex-id) in monsters
+           do (push (list :key (make-monster-key dex-monster-id))
+                    (gethash dex-id monsters-table)))
+        
+        (loop for (dex-quest-id dex-id) in quests
+           do (push (list :key (make-quest-key (1- dex-quest-id)))
+                    (gethash dex-id quests-table)))
+                
+        (loop
+           for id from 0
+           for (dex-id
+                rare
+                sell-price buy-price
+                carry ;; maximum carry quantity
+                en zh jp) in items
+           do (let ((type (identify-item-type id))
+                    (key (make-item-key id)))
+                ;; Make sure that there is no missing item ids in Dex.
+                (assert (= (1+ id) dex-id))
+                (when (> type -1)
+                  (push (list :id id
+                              :key (make-item-key id)
+                              :type type
+                              :rare rare
+                              :name (lang-text :en (or en jp)
+                                               :zh (or zh jp)
+                                               :jp jp)
+                              :price (list :sell sell-price :buy buy-price)
+                              :carry carry
+                              :acquire (list :combo (find-combo-list-to-produce dex-id combos))
+                              :usage (list :combo (find-item-list-can-be-produced-from dex-id combos)
+                                           :weapon (gethash (make-item-key id)
+                                                            item-weapon-map
+                                                            nil))
+                              :iconid (gethash id item-icon-map)
+                              :armors (remove-duplicates (gethash dex-id armors-table)
+                                                         :test equal-key)
+                              :jewels (remove-duplicates (gethash dex-id jewels-table)
+                                                         :test equal-key)
+                              :monsters (remove-duplicates (gethash dex-id monsters-table)
+                                                           :test equal-key)
+                              :quests (remove-duplicates (gethash dex-id quests-table)
+                                                         :test equal-key))
+                        *items*)))))))
 
   (setf *items* (nreverse *items*))
   (format t "[ ok ] Items loaded, total: ~a~%"
