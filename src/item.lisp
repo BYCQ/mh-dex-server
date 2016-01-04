@@ -184,31 +184,30 @@
                     (key (make-item-key id)))
                 ;; Make sure that there is no missing item ids in Dex.
                 (assert (= (1+ id) dex-id))
-                (when (> type -1)
-                  (push (list :id id
-                              :key (make-item-key id)
-                              :type type
-                              :rare rare
-                              :name (lang-text :en (or en jp)
-                                               :zh (or zh jp)
-                                               :jp jp)
-                              :price (list :sell sell-price :buy buy-price)
-                              :carry carry
-                              :acquire (list :combo (find-combo-list-to-produce dex-id combos))
-                              :usage (list :combo (find-item-list-can-be-produced-from dex-id combos)
-                                           :weapon (gethash (make-item-key id)
-                                                            item-weapon-map
-                                                            nil))
-                              :iconid (gethash id item-icon-map)
-                              :armors (remove-duplicates (gethash dex-id armors-table)
+                (push (list :id id
+                            :key (make-item-key id)
+                            :type type
+                            :rare rare
+                            :name (lang-text :en (or en jp)
+                                             :zh (or zh jp)
+                                             :jp jp)
+                            :price (list :sell sell-price :buy buy-price)
+                            :carry carry
+                            :acquire (list :combo (find-combo-list-to-produce dex-id combos))
+                            :usage (list :combo (find-item-list-can-be-produced-from dex-id combos)
+                                         :weapon (gethash (make-item-key id)
+                                                          item-weapon-map
+                                                          nil))
+                            :iconid (gethash id item-icon-map)
+                            :armors (remove-duplicates (gethash dex-id armors-table)
+                                                       :test equal-key)
+                            :jewels (remove-duplicates (gethash dex-id jewels-table)
+                                                       :test equal-key)
+                            :monsters (remove-duplicates (gethash dex-id monsters-table)
                                                          :test equal-key)
-                              :jewels (remove-duplicates (gethash dex-id jewels-table)
-                                                         :test equal-key)
-                              :monsters (remove-duplicates (gethash dex-id monsters-table)
-                                                           :test equal-key)
-                              :quests (remove-duplicates (gethash dex-id quests-table)
-                                                         :test equal-key))
-                        *items*)))))))
+                            :quests (remove-duplicates (gethash dex-id quests-table)
+                                                       :test equal-key))
+                      *items*))))))
 
   (setf *items* (nreverse *items*))
   (format t "[ ok ] Items loaded, total: ~a~%"
