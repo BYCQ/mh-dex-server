@@ -3,9 +3,11 @@
   (defpackage mh-dex.common
     (:use :cl)
     (:import-from :alexandria
-		  :with-gensyms)
+		  :with-gensyms
+                  :symbolicate)
     (:export :do-query
              :with-dex-queries
+             :def-db-interface
              :make-used-item-map
              :make-item-key
              :make-weapon-key
@@ -54,6 +56,22 @@
   			       `(do-query ,database ,@(rest binding))))
                        query-bindings)
   	   ,@body))))
+
+  (defmacro def-db-interface (name db)
+    (let ((index (symbolicate '* name '-index*)))
+      (with-gensyms (key keys entry keyonly)
+        `(let ((,index nil))
+           (defun ,(symbolicate 'fetch- name '-db) (&optional (,keys nil) (,keyonly nil))
+             (cond (,keyonly (mapcar (lambda (x) (getf x :key)) ,db))
+                   ((null ,keys) ,db)
+                   (t (when (null ,index)
+                        (setf ,index (make-hash-table :test #'equal))
+                        (loop for ,entry in ,db
+                           do (setf (gethash (getf ,entry :id)
+                                             ,index)
+                                    ,entry)))
+                      (loop for ,key in ,keys
+                         collect (gethash ,key ,index :null)))))))))
 
   (defmacro lang-text (&key (en nil) (zh nil) (jp nil))
     `(list ,@(list :en `(if ,en ,en ,jp))

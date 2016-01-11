@@ -4,13 +4,15 @@
     (:use :cl)
     (:import-from :mh-dex.common
                   :with-dex-queries
+                  :def-db-interface
                   :make-quest-key
                   :make-item-key
                   :make-monster-key
                   :lang-text)
     (:export :*quests*
              :reload-quests
-             :get-quest-list)))
+             :get-quest-list
+             :fetch-quest-db)))
 (in-package :mh-dex.quest)
 
 (defun quest-level (level-id)
@@ -146,9 +148,4 @@
   
 (defun get-quest-list () *quests*)
 
-                        
-                      
-    
-                                      
-
-              
+(def-db-interface quest *quests*)

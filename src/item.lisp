@@ -4,6 +4,7 @@
     (:use :cl)
     (:import-from :mh-dex.common
                   :with-dex-queries
+                  :def-db-interface
                   :make-item-key
                   :make-armor-key
                   :make-quest-key
@@ -18,7 +19,8 @@
              :reload-items
              :get-item-type-list
              :get-item-list
-             :ensure-items-loaded)))
+             :ensure-items-loaded
+             :fetch-item-db)))
 (in-package :mh-dex.item)
 
 ;; TODO(breakds): Ask Ping what items should be masked out.
@@ -222,3 +224,5 @@
 (defun get-item-type-list () +item-types+)
 
 (defun get-item-list () *items*)
+
+(def-db-interface item *items*)

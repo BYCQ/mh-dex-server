@@ -13,7 +13,8 @@
              :get-sharpness-color-list
              :get-special-type-list
              :reload-weapons
-             :ensure-weapons-loaded)))
+             :ensure-weapons-loaded
+             :fetch-weapon-db)))
 (in-package :mh-dex.weapon)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -267,3 +268,14 @@
   "Returns the list of special attacks among weapons."
   +special-types+)
 
+(let ((*index* (make-array (length +weapon-types+) :initial-element nil)))
+  (defun fetch-weapon-db (type &optional (ids nil))
+    (cond ((null ids) (aref *weapons* type))
+          (t (when (null (aref *index* type))
+               (setf (aref *index* type) (make-hash-table))
+               (loop for weapon in (aref *weapons* type)
+                  do (setf (gethash (getf weapon :id)
+                                    (aref *index* type))
+                           weapon)))
+             (loop for id in ids
+                collect (gethash id (aref *index* type)))))))

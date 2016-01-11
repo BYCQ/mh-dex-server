@@ -4,6 +4,7 @@
     (:use :cl)
     (:import-from :mh-dex.common
                   :with-dex-queries
+                  :def-db-interface
                   :make-skill-key
                   :make-jewel-key
                   :make-armor-key
@@ -11,6 +12,7 @@
     (:export :*skills*
              :reload-skills
              :get-skill-list
+             :fetch-skill-db
              :ensure-skills-loaded)))
 (in-package :mh-dex.skill)
 
@@ -90,5 +92,4 @@
 
 (defun get-skill-list () *skills*)
 
-
-
+(def-db-interface skill *skills*)

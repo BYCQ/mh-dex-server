@@ -4,13 +4,15 @@
     (:use :cl)
     (:import-from :mh-dex.common
                   :with-dex-queries
+                  :def-db-interface
                   :make-monster-key
                   :make-item-key
                   :make-quest-key
                   :lang-text)
     (:export :*monsters*
              :reload-monsters
-             :get-monster-list)))
+             :get-monster-list
+             :fetch-monster-db)))
 (in-package :mh-dex.monster)
 
 (defparameter *monsters* nil)
@@ -78,6 +80,4 @@
   
 (defun get-monster-list () *monsters*)
     
-
-
-
+(def-db-interface monster *monsters*)

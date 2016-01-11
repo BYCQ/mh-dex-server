@@ -9,7 +9,8 @@
     :license "MIT"
     :depends-on (:realispic
                  :sqlite
-                 :jonathan)
+                 :jonathan
+                 :alexandria)
     :components ((:module "src" 
                           :components
                           ((:file "common")

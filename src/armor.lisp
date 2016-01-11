@@ -4,13 +4,15 @@
     (:use :cl)
     (:import-from :mh-dex.common
                   :with-dex-queries
+                  :def-db-interface
                   :make-armor-key
                   :make-skill-key
                   :make-used-item-map
                   :lang-text)
     (:export :*armors*
              :reload-armors
-             :get-armor-list)))
+             :get-armor-list
+             :fetch-armor-db)))
 (in-package :mh-dex.armor)
 
 (defparameter *armors* nil)
@@ -75,3 +77,4 @@
 
 (defun get-armor-list () *armors*)
   
+(def-db-interface armor *armors*)

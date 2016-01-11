@@ -4,6 +4,7 @@
     (:use :cl)
     (:import-from :mh-dex.common
                   :with-dex-queries
+                  :def-db-interface
                   :make-jewel-key
                   :make-skill-key
                   :make-used-item-map
@@ -15,7 +16,8 @@
                   :*skills*)
     (:export :*jewels*
              :reload-jewels
-             :get-jewel-list)))
+             :get-jewel-list
+             :fetch-jewel-db)))
 (in-package :mh-dex.jewel)
 
 (defparameter *jewels* nil)
@@ -86,3 +88,4 @@
 
 (defun get-jewel-list () *jewels*)
   
+(def-db-interface jewel *jewels*)
