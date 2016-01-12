@@ -68,6 +68,10 @@
          do (let ((key (make-monster-key id)))
               (assert (= dex-id id))
               (push (list :id id
+                          :type (cond ((= id 0) 0) ;; 0: N/A
+                                      ((< id 35) 1) ;; 1: small monsters
+                                      ((< id 106) 2) ;; 2: big monsters
+                                      (t 3)) ;; 3: N/A
                           :key key
                           :items (gethash dex-id items-table)
                           :quests (gethash dex-id quests-table)
