@@ -10,7 +10,8 @@
                   :get-weapon-list
                   :get-weapon-type-list
                   :get-special-type-list
-                  :get-sharpness-color-list)
+                  :get-sharpness-color-list
+                  :get-gunlance-shot-types)
     (:import-from :mh-dex.item
                   :reload-items
                   :get-item-type-list
@@ -48,7 +49,7 @@
 (defparameter *initialized* nil
   "Inidicating that the server is fully initialized.")
 
-(defparameter *server-version* "88426"
+(defparameter *server-version* "88427"
   "The version of the server. Used check the staleness of the client
    data.")
 
@@ -85,6 +86,7 @@
 (def-dex-service environment ()
   (list :version *server-version*
         :weapontypes (get-weapon-type-list)
+        :gunlanceshottypes (get-gunlance-shot-types)
         :specialtypes (get-special-type-list)
         :sharpnesscolors (get-sharpness-color-list)
         :itemtypes (get-item-type-list)))

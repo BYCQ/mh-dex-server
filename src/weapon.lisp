@@ -12,6 +12,7 @@
              :get-weapon-type-list
              :get-sharpness-color-list
              :get-special-type-list
+             :get-gunlance-shot-types
              :reload-weapons
              :ensure-weapons-loaded
              :fetch-weapon-db)))
@@ -27,6 +28,7 @@
                          (:affinity '(list :name "affinity" :zh "会心" :jp "会心" :en "Affinity"))
                          (:special '(list :name "special" :zh "特殊" :jp "特別" :en "Special"))
                          (:sharpness '(list :name "sharpness" :zh "斩味" :jp "斬れ味":en "Sharpness"))
+                         (:gunlance-shot-type '(list :name "gunlanceType" :zh "炮击" :jp "砲撃" :en "Gun"))
                          (:attack '(list :name "attack" :zh "攻击力" :jp "攻撃" :en "Attack" :numeric t))))
                      body)))
 
@@ -69,7 +71,8 @@
                                                             :zh "铳枪"
                                                             :jp "ガンランス")
                                            :columns (create-columns :name :slots :attack
-                                                                    :affinity :special :sharpness))
+                                                                    :affinity :special :gunlance-shot-type
+                                                                    :sharpness))
                                      (list :name (lang-text :en "Switch Axe"
                                                             :zh "斩击斧"
                                                             :jp "スラッシュアックス")
@@ -121,7 +124,19 @@
                                             :color "#000000")
                                       (list :name (lang-text :en "Blast" :zh "爆破" :jp "爆破")
                                             :color "#000000"))
-    "The information of the special attacks among weapons."))
+    "The information of the special attacks among weapons.")
+
+  (defparameter +gunlance-shot-types+ (list (list :name (lang-text :en "Normal" :zh "通常" :jp "通常"))
+                                            (list :name (lang-text :en "Wide" :zh "扩散" :jp "拡散"))
+                                            (list :name (lang-text :en "Long" :zh "放射" :jp "放射")))
+    "The shot types of gunlance.")
+
+  (defparameter +bow-shot-types+ (list (list :name (lang-text :en "Pierce" :zh "" :jp ""))
+                                       (list :name (lang-text :en "Rapid" :zh "" :jp ""))
+                                       (list :name (lang-text :en "Spread" :zh "" :jp ""))
+                                       (list :name (lang-text :en "Heavy" :zh "" :jp "")))
+    "The shot types of bow."))
+
 
 (defparameter *weapons* (make-array (length +weapon-types+)
                                     :initial-element nil)
@@ -144,6 +159,13 @@
         when enable-collect 
         collect x))))
 
+(defun translate-gunlance-shot-type (id)
+  "Translate the gunlance shot type ID from dex database into actual
+  type ID and level."
+  (cond ((<= id 5) (list :id 0 :level id))
+        ((<= id 10) (list :id 1 :level (- id 5)))
+        (t (list :id 2 :level (- id 10)))))
+
 (defun reload-weapons ()
   "Reload the variable *weapons* which contains all the weapon
    information."
@@ -161,7 +183,9 @@
                                        "Def"
                                        "Slot"
                                        "Sharp" "SharpP1"
-                                       "ProPx" "LvUpPx")
+                                       "ProPx" "LvUpPx"
+                                       ;; Gunlance
+                                       "GLShotType_ID")
                               (:from "DB_Wpn")
                               (:inner-join "ID_Wpn_Name" "DB_Wpn.Wpn_ID = ID_Wpn_Name.Wpn_ID")
                               (:order-by "Wpn_Type_ID" "DB_Wpn.Wpn_ID"))
@@ -191,7 +215,8 @@
               defense
               slot
               sharpness sharpness-plus
-              produce-price upgrade-price) in weapons
+              produce-price upgrade-price
+              gunlance-shot-type) in weapons
          do (let ((type-id (1- dex-type-id)))
               ;; Reset the id when starting a new type.
               (if (= previous-dex-type-id dex-type-id)
@@ -222,6 +247,14 @@
                           :material (gethash dex-id material-table nil)
                           :price (list :produce produce-price :upgrade upgrade-price))
                     (aref *weapons* type-id))
+
+              ;; Type-specific Information
+              ;;
+              ;; type-id = 7, Gunlance
+              (when (= type-id 7)
+                (setf (getf (car (aref *weapons* type-id)) :shottype)
+                      (translate-gunlance-shot-type gunlance-shot-type)))
+              
               ;; Make the child-parent connection. Decrease the children
               ;; count for the parent (i.e. stack top).
               (when stack 
@@ -267,6 +300,9 @@
 (defun get-special-type-list ()
   "Returns the list of special attacks among weapons."
   +special-types+)
+
+(defun get-gunlance-shot-types ()
+  +gunlance-shot-types+)
 
 (let ((*index* (make-array (length +weapon-types+) :initial-element nil)))
   (defun fetch-weapon-db (type &optional (ids nil))
