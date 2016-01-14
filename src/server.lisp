@@ -9,6 +9,13 @@
                   :fetch-weapon-db
                   :get-weapon-list
                   :get-weapon-type-list
+                  :get-charge-blade-phials
+                  :get-switch-axe-phials
+                  :get-bullet-types
+                  :get-inner-bullet-types
+                  :get-bow-shot-types
+                  :get-bow-arc-types
+                  :get-coating-types
                   :get-special-type-list
                   :get-sharpness-color-list
                   :get-gunlance-shot-types)
@@ -49,7 +56,7 @@
 (defparameter *initialized* nil
   "Inidicating that the server is fully initialized.")
 
-(defparameter *server-version* "88427"
+(defparameter *server-version* "88437"
   "The version of the server. Used check the staleness of the client
    data.")
 
@@ -87,6 +94,13 @@
   (list :version *server-version*
         :weapontypes (get-weapon-type-list)
         :gunlanceshottypes (get-gunlance-shot-types)
+        :chargebladephials (get-charge-blade-phials)
+        :switchaxephials (get-switch-axe-phials)
+        :bullettypes (get-bullet-types)
+        :innerbullettypes (get-inner-bullet-types)
+        :bowshottypes (get-bow-shot-types)
+        :bowarctypes (get-bow-arc-types)
+        :coatingtypes (get-coating-types)
         :specialtypes (get-special-type-list)
         :sharpnesscolors (get-sharpness-color-list)
         :itemtypes (get-item-type-list)))
