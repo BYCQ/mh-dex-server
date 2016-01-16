@@ -107,12 +107,12 @@
                                                             :zh "轻弩"
                                                             :jp "ライトボウガン")
                                            :columns (create-columns :name :slots :attack
-                                                                    :affinity :special))
+                                                                    :affinity))
                                      (list :name (lang-text :en "Heavy Bowgun"
                                                             :zh "重弩"
                                                             :jp "ヘビィボウガン")
                                            :columns (create-columns :name :slots :attack
-                                                                    :affinity :special))
+                                                                    :affinity))
                                      (list :name (lang-text :en "Bow"
                                                             :zh "弓"
                                                             :jp "弓")
