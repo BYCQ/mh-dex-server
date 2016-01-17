@@ -3,4 +3,5 @@
                           :toplevel (lambda ()
                                       (mh-dex.server:dex :start)
                                       (loop while t
-                                         do (sleep 100))))
+                                         do (sleep 100)))
+                          :executable t)
