@@ -16,6 +16,9 @@
                   :get-bow-shot-types
                   :get-bow-arc-types
                   :get-coating-types
+                  :get-reload-types
+                  :get-recoil-types
+                  :get-steadiness-types
                   :get-special-type-list
                   :get-sharpness-color-list
                   :get-gunlance-shot-types)
@@ -39,7 +42,8 @@
     (:import-from :mh-dex.monster
                   :reload-monsters
                   :fetch-monster-db
-                  :get-monster-list)
+                  :get-monster-list
+                  :get-ailment-types)
     (:import-from :mh-dex.jewel
                   :reload-jewels
                   :fetch-jewel-db
@@ -56,7 +60,7 @@
 (defparameter *initialized* nil
   "Inidicating that the server is fully initialized.")
 
-(defparameter *server-version* "88437"
+(defparameter *server-version* "88442"
   "The version of the server. Used check the staleness of the client
    data.")
 
@@ -101,9 +105,13 @@
         :bowshottypes (get-bow-shot-types)
         :bowarctypes (get-bow-arc-types)
         :coatingtypes (get-coating-types)
+        :reloadtypes (get-reload-types)
+        :recoiltypes (get-recoil-types)
+        :steadinesstypes (get-steadiness-types)
         :specialtypes (get-special-type-list)
         :sharpnesscolors (get-sharpness-color-list)
-        :itemtypes (get-item-type-list)))
+        :itemtypes (get-item-type-list)
+        :ailmenttypes (get-ailment-types)))
 
 (def-dex-service weapon-list (type)
   (get-weapon-list (parse-integer type)))

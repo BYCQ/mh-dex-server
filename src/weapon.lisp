@@ -20,6 +20,9 @@
              :get-bow-shot-types
              :get-bow-arc-types
              :get-coating-types
+             :get-reload-types
+             :get-recoil-types
+             :get-steadiness-types
              :reload-weapons
              :ensure-weapons-loaded
              :fetch-weapon-db)))
@@ -41,6 +44,9 @@
                          (:bow-arc '(list :name "bowArc" :zh "曲射" :jp "曲射" :en "Arc"))
                          (:bow-shot '(list :name "bowShot" :zh "蓄力" :jp "溜め" :en "Charge"))
                          (:notes '(list :name "notes" :zh "音符" :jp "音色" :en "Notes"))
+                         (:reload '(list :name "reload" :zh "装弹" :jp "リロード" :en "Reload"))
+                         (:steadiness '(list :name "steadiness" :zh "摇晃" :jp "ブレ" :en "Shake"))
+                         (:recoil '(list :name "recoil" :zh "后坐力" :jp "反動" :en "Recoil"))
                          (:attack '(list :name "attack" :zh "攻击力" :jp "攻撃" :en "Attack" :numeric t))))
                      body)))
 
@@ -107,12 +113,12 @@
                                                             :zh "轻弩"
                                                             :jp "ライトボウガン")
                                            :columns (create-columns :name :slots :attack
-                                                                    :affinity))
+                                                                    :affinity :reload :steadiness :recoil))
                                      (list :name (lang-text :en "Heavy Bowgun"
                                                             :zh "重弩"
                                                             :jp "ヘビィボウガン")
                                            :columns (create-columns :name :slots :attack
-                                                                    :affinity))
+                                                                    :affinity :reload :steadiness :recoil))
                                      (list :name (lang-text :en "Bow"
                                                             :zh "弓"
                                                             :jp "弓")
@@ -185,7 +191,29 @@
                                       (list :name (lang-text :EN "Blast" :ZH "爆破瓶" :JP "爆破ビン"))
                                       (list :name (lang-text :EN "Paint" :ZH "染色瓶" :JP "ペイントビン")))
     "The types of bow coatings.")
-  
+
+  (defparameter +reload-types+ (list (list :name (lang-text :en "Fast" :zh "快" :jp "速い"))
+                                     (list :name (lang-text :en "Abv.Avg" :zh "稍快" :jp "やや速い"))
+                                     (list :name (lang-text :en "Average" :zh "普通" :jp "普通"))
+                                     (list :name (lang-text :en "Bel.Avg" :zh "稍慢" :jp "やや遅い"))
+                                     (list :name (lang-text :en "Slow" :zh "慢" :jp "遅い")))
+    "The types of bowgun reload.")
+
+  (defparameter +recoil-types+ (list (list :name (lang-text :en "Low" :zh "小" :jp "小"))
+                                     (list :name (lang-text :en "Some" :zh "偏小" :jp "やや小"))
+                                     (list :name (lang-text :en "Average" :zh "中" :jp "中"))
+                                     (list :name (lang-text :en "High" :zh "大" :jp "大")))
+    "The types of bowgun recoil.")
+
+  (defparameter +steadiness-types+ (list (list :name (lang-text :en "(None)" :zh "无" :jp "なし"))
+                                         (list :name (lang-text :en "LR Mild" :zh "左右/小" :jp "左右/小"))
+                                         (list :name (lang-text :en "LR Severe" :zh "左右/大" :jp "左右/大"))
+                                         (list :name (lang-text :en "L Mild" :zh "左侧/小" :jp "左側/小"))
+                                         (list :name (lang-text :en "L Severe" :zh "左侧/大" :jp "左側/大"))
+                                         (list :name (lang-text :en "R Mild" :zh "右侧/小" :jp "右側/小"))
+                                         (list :name (lang-text :en "R Severe" :zh "右侧/大" :jp "右側/大")))
+    "The types of bowgun steadiness.")
+
   (defparameter +bullet-types+ (list (list :name (lang-text :EN "Normal S" :ZH "通常弹" :JP "通常弾") :level 3)
                                      (list :name (lang-text :EN "Pierce S" :ZH "贯通弹" :JP "貫通弾") :level 3)
                                      (list :name (lang-text :EN "Pellet S" :ZH "散弹" :JP "散弾") :level 3)
@@ -318,8 +346,10 @@
                                        "AxePhial_ID"
                                        ;; Hunting Horn
                                        "HHNote1_ID" "HHNote2_ID" "HHNote3_ID"
+                                       ;; Bowgun
+                                       "GunReloadSpd_ID" "GunSteadiness_ID" "GunRecoil_ID"
                                        ;; Bow
-                                       "BowShot_ID" "BowShotType_Qty" "BowShotType1_ID"
+                                       "BowShot_ID" "BowShotType1_ID"
                                        "BowShotType2_ID" "BowShotType3_ID" "BowShotType4_ID")
                               (:from "DB_Wpn")
                               (:inner-join "ID_Wpn_Name" "DB_Wpn.Wpn_ID = ID_Wpn_Name.Wpn_ID")
@@ -389,7 +419,8 @@
               gunlance-shot-type
               axe-phial
               note-1 note-2 note-3
-              arc shot-level shot-type-1 shot-type-2 shot-type-3 shot-type-4) in weapons
+              reload steadiness recoil
+              arc shot-type-1 shot-type-2 shot-type-3 shot-type-4) in weapons
          do (let ((type-id (1- dex-type-id)))
               ;; Reset the id when starting a new type.
               (if (= previous-dex-type-id dex-type-id)
@@ -447,6 +478,9 @@
 
               ;; typ-id = 11/12, Bowgun
               (when (or (= type-id 11) (= type-id 12))
+                (setf (getf (car (aref *weapons* type-id)) :reload) (1- reload))
+                (setf (getf (car (aref *weapons* type-id)) :steadiness) steadiness)
+                (setf (getf (car (aref *weapons* type-id)) :recoil) (1- recoil))
                 (setf (getf (car (aref *weapons* type-id)) :bullets)
                       (encode-bullets (gethash dex-id bullet-table)))
                 (setf (getf (car (aref *weapons* type-id)) :inners)
@@ -532,6 +566,15 @@
 
 (defun get-coating-types ()
   +coating-types+)
+
+(defun get-reload-types ()
+  +reload-types+)
+
+(defun get-recoil-types ()
+  +recoil-types+)
+
+(defun get-steadiness-types ()
+  +steadiness-types+)
 
 (let ((*index* (make-array (length +weapon-types+) :initial-element nil)))
   (defun fetch-weapon-db (type &optional (ids nil))

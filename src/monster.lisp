@@ -12,10 +12,20 @@
     (:export :*monsters*
              :reload-monsters
              :get-monster-list
+             :get-ailment-types
              :fetch-monster-db)))
 (in-package :mh-dex.monster)
 
 (defparameter *monsters* nil)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter +ailment-types+ (list (list :name (lang-text :en "Poison" :zh "毒" :jp "毒"))
+                                      (list :name (lang-text :en "Paralyze" :zh "麻痹" :jp "麻痺"))
+                                      (list :name (lang-text :en "Sleep" :zh "睡眠" :jp "睡眠"))
+                                      (list :name (lang-text :en "Blast" :zh "爆破" :jp "爆破"))
+                                      (list :name (lang-text :en "Stun" :zh "气绝" :jp "気絶"))
+                                      (list :name (lang-text :en "Fatigue" :zh "灭气" :jp "減気"))
+                                      (list :name (lang-text :en "Mount" :zh "骑乘" :jp "乗り")))))
 
 (defun reload-monsters ()
   "Reload the variable *monsters* which contains all the monster
@@ -42,9 +52,14 @@
                                      "Mon_GetItmType_3")
                             (:from "DB_ItmtoMon")
                             (:inner-join "ID_Mon_GetItmType"
-                                         "DB_ItmtoMon.Mon_GetItmType_ID = Id_Mon_GetItmType.Mon_GetItmType_ID")))
+                                         "DB_ItmtoMon.Mon_GetItmType_ID = Id_Mon_GetItmType.Mon_GetItmType_ID"))
+                     (ailments (:select "Mon_ID" "Stat_ID" "TolInitial" "TolIncrease" "TolMax"
+                                        "Duration" "Damage")
+                               (:from "DB_Mon_Ail")
+                               (:order-by "Mon_ID" "-Stat_ID")))
     (let ((items-table (make-hash-table))
-          (quests-table (make-hash-table)))
+          (quests-table (make-hash-table))
+          (ailments-table (make-hash-table)))
 
       (loop for (dex-id dex-item-id quantity probability rank en zh jp)
          in items
@@ -61,7 +76,18 @@
          do (loop for dex-id in (rest ids)
                do (push (list :key (make-quest-key (1- dex-quest-id)))
                         (gethash dex-id quests-table nil))))
-      
+
+      (loop for (dex-id dex-stat-id initial increase max duration damage) in ailments
+         ;; There is a stat id = 13 in dex database, but not sure what it is.
+         when (< dex-stat-id 13)
+         do (push (list :id (- dex-stat-id 6)
+                        :stats (list :initial initial
+                                     :increase increase
+                                     :max max
+                                     :damage damage)
+                        :duration duration)
+                  (gethash dex-id ailments-table nil)))
+
       (loop
          for id from 0
          for (dex-id en zh jp) in monsters
@@ -75,6 +101,7 @@
                           :key key
                           :items (gethash dex-id items-table)
                           :quests (gethash dex-id quests-table)
+                          :ailments (gethash dex-id ailments-table)
                           :name (lang-text :en en :zh zh :jp jp))
                     *monsters*)))))
   
@@ -83,5 +110,7 @@
   (format t "[ ok ] Skills loaded, total: ~a~%" (length *monsters*)))
   
 (defun get-monster-list () *monsters*)
+
+(defun get-ailment-types () +ailment-types+)
     
 (def-db-interface monster *monsters*)
