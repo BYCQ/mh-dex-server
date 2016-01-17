@@ -1,0 +1,10 @@
+[Unit]
+Description=Monster Hunter Dex Data Service
+ConditionPathExists=/home/breakds/bin/mh-dex-server
+
+[Service]
+TimeoutStartSec=0
+ExecStart=/home/breakds/bin/mh-dex-server
+
+[Install]
+WantedBy=multi-user.target
