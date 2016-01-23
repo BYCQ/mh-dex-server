@@ -4,8 +4,6 @@ from string import Template
 import apt
 import git
 
-env.hosts = ['mhxdexa.breakds.org']
-
 USER_MAP = {
     'mhxdexa.breakds.org': 'breakds',
     'mhxdex.breakds.org': 'breakds',
