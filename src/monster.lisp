@@ -56,10 +56,20 @@
                      (ailments (:select "Mon_ID" "Stat_ID" "TolInitial" "TolIncrease" "TolMax"
                                         "Duration" "Damage")
                                (:from "DB_Mon_Ail")
-                               (:order-by "Mon_ID" "-Stat_ID")))
+                               (:order-by "Mon_ID" "-Stat_ID"))
+                     (weakness (:select "DB_Mon_Weak.MonPart_ID" "Mon_ID"
+                                        ;; part names: 0 = en, 1 = zh, 3 = jp
+                                        "Mon_Part_0" "Mon_Part_1" "Mon_Part_3"
+                                        "Cut" "Impact" "Shot"
+                                        "Fir" "Wtr" "Ice" "Thd" "Drg" "Diz")
+                               (:from "DB_Mon_Weak")
+                               (:inner-join "ID_Mon_Part" "DB_Mon_Weak.MonPart_ID = ID_Mon_Part.Mon_Part_ID")
+                               (:order-by "-DB_Mon_Weak.MonPart_ID")))
+
     (let ((items-table (make-hash-table))
           (quests-table (make-hash-table))
-          (ailments-table (make-hash-table)))
+          (ailments-table (make-hash-table))
+          (weakness-table (make-hash-table)))
 
       (loop for (dex-id dex-item-id quantity probability rank en zh jp)
          in items
@@ -88,6 +98,18 @@
                         :duration duration)
                   (gethash dex-id ailments-table nil)))
 
+      (loop for (seq dex-id en zh jp cut impact shot fire water ice thunder dragon dizzle)
+         in weakness
+         do (push (list :label (lang-text :en en :zh zh :jp jp)
+                        :hit (list :cut cut :impact impact :shot shot)
+                        :elemental (list :fire fire
+                                         :water water
+                                         :ice ice
+                                         :thunder thunder
+                                         :dragon dragon
+                                         :dizzle dizzle))
+                  (gethash dex-id weakness-table)))
+      
       (loop
          for id from 0
          for (dex-id en zh jp) in monsters
@@ -102,6 +124,7 @@
                           :items (gethash dex-id items-table)
                           :quests (gethash dex-id quests-table)
                           :ailments (gethash dex-id ailments-table)
+                          :weakness (gethash dex-id weakness-table nil)
                           :name (lang-text :en en :zh zh :jp jp))
                     *monsters*)))))
   
