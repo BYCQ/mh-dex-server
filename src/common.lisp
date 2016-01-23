@@ -109,4 +109,8 @@
 (defun make-jewel-key (id)
   (format nil "~3,'0d" id))
 
+(defun make-location-key (id)
+  (format nil "~2,'0d" id))
+
+
 

@@ -25,6 +25,8 @@
     (:import-from :mh-dex.item
                   :reload-items
                   :get-item-type-list
+                  :get-locations
+                  :get-approaches
                   :fetch-item-db
                   :get-item-list)
     (:import-from :mh-dex.quest
@@ -60,7 +62,7 @@
 (defparameter *initialized* nil
   "Inidicating that the server is fully initialized.")
 
-(defparameter *server-version* "88445"
+(defparameter *server-version* "88446"
   "The version of the server. Used check the staleness of the client
    data.")
 
@@ -111,6 +113,8 @@
         :specialtypes (get-special-type-list)
         :sharpnesscolors (get-sharpness-color-list)
         :itemtypes (get-item-type-list)
+        :locations (get-locations)
+        :approaches (get-approaches)
         :ailmenttypes (get-ailment-types)))
 
 (def-dex-service weapon-list (type)

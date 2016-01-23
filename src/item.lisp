@@ -18,12 +18,13 @@
              :*item-icon-path*
              :reload-items
              :get-item-type-list
+             :get-locations
+             :get-approaches
              :get-item-list
              :ensure-items-loaded
              :fetch-item-db)))
 (in-package :mh-dex.item)
 
-;; TODO(breakds): Ask Ping what items should be masked out.
 (defparameter +item-types+
   (list (list :name (lang-text :en "Common"
                                :zh "生存"
@@ -65,6 +66,45 @@
                                :zh "端材"
                                :jp "端材")
               :range '((1299 1478)))))
+
+(defparameter +locations+
+  (list (list :name (lang-text :en "A. Forest" :zh "古代林" :jp "古代林"))
+        (list :name (lang-text :en "Forest and Hills" :zh "森丘" :jp "森丘"))
+        (list :name (lang-text :en "Snowy Mountains" :zh "雪山" :jp "雪山"))
+        (list :name (lang-text :en "Misty Peaks" :zh "溪流" :jp "渓流"))
+        (list :name (lang-text :en "Dunes" :zh "旧沙漠" :jp "旧砂漠"))
+        (list :name (lang-text :en "Deserted Island" :zh "孤岛" :jp "孤島"))
+        (list :name (lang-text :en "Swamp" :zh "沼地" :jp "沼地"))
+        (list :name (lang-text :en "Volcano" :zh "火山" :jp "火山"))
+        (list :name (lang-text :en "A. Steppe" :zh "遗迹平原" :jp "遺跡平原"))
+        (list :name (lang-text :en "V. Hollow" :zh "地底火山" :jp "地底火山"))
+        (list :name (lang-text :en "P. Forest" :zh "原生林" :jp "原生林"))
+        (list :name (lang-text :en "F. Seaway" :zh "冰海" :jp "氷海"))
+        (list :name (lang-text :en "Arena" :zh "斗技场" :jp "闘技場"))
+        (list :name (lang-text :en "Slayground" :zh "立体斗技场" :jp "立体闘技場"))
+        (list :name (lang-text :en "Water Arena" :zh "水上斗技场" :jp "水上闘技場"))
+        (list :name (lang-text :en "Sanctuary" :zh "禁足地" :jp "禁足地"))
+        (list :name (lang-text :en "Tower" :zh "塔之秘境" :jp "塔の秘境"))
+        (list :name (lang-text :en "Scrd Mountain" :zh "灵峰" :jp "霊峰"))
+        (list :name (lang-text :en "Ingle Isle" :zh "溶岩岛" :jp "溶岩島"))
+        (list :name (lang-text :en "Polar Field" :zh "极圈" :jp "極圏"))
+        (list :name (lang-text :en "Drg Graveyard" :zh "龙之墓场" :jp "竜ノ墓場"))
+        (list :name (lang-text :en "A. Forest <D>" :zh "古代林＜昼＞" :jp "古代林＜昼＞"))
+        (list :name (lang-text :en  "A. Forest <N>" :zh "古代林＜夜＞" :jp "古代林＜夜＞"))
+        (list :name (lang-text :en "F. and Hills <D>" :zh "森丘＜昼＞" :jp "森丘＜昼＞"))
+        (list :name (lang-text :en  "F. and Hills <N>" :zh "森丘＜夜＞" :jp "森丘＜夜＞"))
+        (list :name (lang-text :en "Snowy Mt. (D)" :zh "雪山＜昼＞" :jp "雪山＜昼＞"))
+        (list :name (lang-text :en  "Snowy Mt. (N)" :zh "雪山＜夜＞" :jp "雪山＜夜＞"))
+        (list :name (lang-text :en "M.Peaks (D)" :zh "溪流＜昼＞" :jp "渓流＜昼＞"))
+        (list :name (lang-text :en  "M.Peaks (N)" :zh "溪流＜夜＞" :jp "渓流＜夜＞")))
+  "The list of maps.")
+
+(defparameter +approaches+
+  (list (list :name (lang-text :en "Gathering" :zh "采集" :jp "採取"))
+        (list :name (lang-text :en "Fishing" :zh "钓鱼" :jp "釣り"))
+        (list :name (lang-text :en "Mining" :zh "采矿" :jp "採掘"))
+        (list :name (lang-text :en "Bug-Catching" :zh "捕虫" :jp "虫捕り")))
+  "The approaches to get items from a location.")
 
 (defun identify-item-type (id)
   (loop
@@ -151,13 +191,18 @@
                        (monsters (:select "Mon_ID" "Itm_ID")
                                  (:from "DB_ItmtoMon"))
                        (quests (:select "Qst_ID" "Itm_ID")
-                               (:from "DB_ItmtoQst")))
+                               (:from "DB_ItmtoQst"))
+                       (locations (:select "Itm_ID" "Loc_ID" "Loc_Ara_ID"
+                                           "Loc_GetType_ID" "Rank_ID")
+                                  (:from "DB_ItmtoLoc")
+                                  (:order-by "-Rank_ID" "Loc_GetType_ID")))
 
       (let ((equal-key (lambda (x y) (equal (getf x :key) (getf y :key))))
             (armors-table (make-hash-table))
             (jewels-table (make-hash-table))
             (monsters-table (make-hash-table))
-            (quests-table (make-hash-table)))
+            (quests-table (make-hash-table))
+            (locations-table (make-hash-table)))
 
         (loop for (dex-armor-id dex-id) in armors
            do (push (list :key (make-armor-key (1- dex-armor-id)))
@@ -174,7 +219,16 @@
         (loop for (dex-quest-id dex-id) in quests
            do (push (list :key (make-quest-key (1- dex-quest-id)))
                     (gethash dex-id quests-table)))
-                
+
+        (loop for (dex-id dex-location-id area approach rank)
+           in locations
+           do (push (list :location (1- dex-location-id)
+                          :area area
+                          :approach (1- approach)
+                          ;; 1 = low, 2 = high
+                          :rank rank)
+                    (gethash dex-id locations-table nil)))
+        
         (loop
            for id from 0
            for (dex-id
@@ -201,6 +255,7 @@
                                                           item-weapon-map
                                                           nil))
                             :iconid (gethash id item-icon-map)
+                            :locations (gethash dex-id locations-table)
                             :armors (remove-duplicates (gethash dex-id armors-table)
                                                        :test equal-key)
                             :jewels (remove-duplicates (gethash dex-id jewels-table)
@@ -222,6 +277,10 @@
   (unless *items* (reload-items)))
 
 (defun get-item-type-list () +item-types+)
+
+(defun get-locations () +locations+)
+
+(defun get-approaches () +approaches+)
 
 (defun get-item-list () *items*)
 
