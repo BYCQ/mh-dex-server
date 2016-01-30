@@ -27,12 +27,23 @@
                                       (list :name (lang-text :en "Fatigue" :zh "灭气" :jp "減気"))
                                       (list :name (lang-text :en "Mount" :zh "骑乘" :jp "乗り")))))
 
+(defun combine-weakness-label (en zh jp condition-en condition-zh condition-jp)
+  (labels ((make-label (name condition)
+             (cond (condition (format nil "~a (~a)" name condition))
+                   (condition-jp (format nil "~a (~a)" name condition-jp))
+                   (t name))))
+    (if condition-jp
+        (lang-text :en (make-label en condition-en)
+                   :zh (make-label zh condition-zh)
+                   :jp (make-label jp condition-jp))
+        (lang-text :en en :zh zh :jp jp))))
+
 (defun reload-monsters ()
   "Reload the variable *monsters* which contains all the monster
    information."
 
   (setf *monsters* nil)
-
+  
   (with-dex-queries ((monsters (:select "ID_Mon_Name.Mon_ID"
                                         ;; names: 0 = en, 1 = zh, 3 = jp
                                         "Mon_Name_0" "Mon_Name_1" "Mon_Name_3")
@@ -60,10 +71,12 @@
                      (weakness (:select "DB_Mon_Weak.MonPart_ID" "Mon_ID"
                                         ;; part names: 0 = en, 1 = zh, 3 = jp
                                         "Mon_Part_0" "Mon_Part_1" "Mon_Part_3"
+                                        "Mon_PartCond_0" "Mon_PartCond_1" "Mon_PartCond_3"
                                         "Cut" "Impact" "Shot"
                                         "Fir" "Wtr" "Ice" "Thd" "Drg" "Diz")
                                (:from "DB_Mon_Weak")
                                (:inner-join "ID_Mon_Part" "DB_Mon_Weak.MonPart_ID = ID_Mon_Part.Mon_Part_ID")
+                               (:inner-join "ID_Mon_PartCond" "DB_Mon_Weak.MonPart_ID = ID_Mon_PartCond.Mon_Part_ID")
                                (:order-by "-DB_Mon_Weak.MonPart_ID")))
 
     (let ((items-table (make-hash-table))
@@ -98,9 +111,12 @@
                         :duration duration)
                   (gethash dex-id ailments-table nil)))
 
-      (loop for (seq dex-id en zh jp cut impact shot fire water ice thunder dragon dizzle)
+      (loop for (seq dex-id
+                     en zh jp
+                     condition-en condition-zh condition-jp
+                     cut impact shot fire water ice thunder dragon dizzle)
          in weakness
-         do (push (list :label (lang-text :en en :zh zh :jp jp)
+         do (push (list :label (combine-weakness-label en zh jp condition-en condition-zh condition-jp)
                         :hit (list :cut cut :impact impact :shot shot)
                         :elemental (list :fire fire
                                          :water water
@@ -131,9 +147,9 @@
   (setf *monsters* (nreverse *monsters*))
 
   (format t "[ ok ] Skills loaded, total: ~a~%" (length *monsters*)))
-  
+
 (defun get-monster-list () *monsters*)
 
 (defun get-ailment-types () +ailment-types+)
-    
+
 (def-db-interface monster *monsters*)

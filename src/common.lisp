@@ -45,6 +45,9 @@
                             (:inner-join (format nil "INNER JOIN ~a ON ~a"
                                                  (second form)
                                                  (third form)))
+                            (:outer-join (format nil "LEFT OUTER JOIN ~a ON ~a"
+                                                 (second form)
+                                                 (third form)))
                             (:order-by (format nil "ORDER BY ~{~a~^, ~}"
                                                (rest form))))))))
 

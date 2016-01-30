@@ -34,9 +34,10 @@
                      (real-skills (:select "DB_Skl.Skl_ID"
                                            ;; names: 0 = en, 1 = zh, 3 = jp
                                            "Skl_Name_0" "Skl_Name_1" "Skl_Name_3"
-                                           "SklTree_ID" "Pt")
+                                           "SklTree_ID" "Pt" "CompSkl_ID")
                                   (:from "DB_Skl")
                                   (:inner-join "ID_Skl_Name" "DB_Skl.Skl_ID = ID_Skl_Name.Skl_ID")
+                                  (:outer-join "DB_CompSkl" "DB_Skl.Skl_ID = DB_CompSkl.Skl_ID")
                                   (:where "SklTree_ID > 0")
                                   (:order-by "SklTree_ID" "Pt"))
                      (armors (:select "Amr_ID" "SklTree_ID" "Pt")
@@ -44,6 +45,7 @@
                      (jewels (:select "Jew_ID" "SklTree_ID" "Pt")
                              (:from "DB_SklTreetoJew")))
     (let ((system-skill-table (make-hash-table))
+          (skill-to-system-map (make-hash-table))
           (armors-table (make-hash-table))
           (jewels-table (make-hash-table)))
 
@@ -58,11 +60,18 @@
          do (push (list :key (make-jewel-key (1- jewel-dex-id))
                         :points points)
                   (gethash dex-id jewels-table nil)))
+
+      (loop
+         for (skill-dex-id en zh jp dex-id points composite-parent) in real-skills
+         do (setf (gethash skill-dex-id skill-to-system-map) dex-id))
       
       (loop
-         for (unused en zh jp dex-id points) in real-skills
+         for (unused en zh jp dex-id points composite-parent) in real-skills
          do (push (list :name (lang-text :en en :zh zh :jp jp)
-                        :points points)
+                        :points points
+                        :composite (if composite-parent
+                                       (1- (gethash composite-parent skill-to-system-map))
+                                       :null))
                   (gethash dex-id system-skill-table nil)))
                                            
       (loop
