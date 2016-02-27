@@ -6,6 +6,7 @@
                   :with-dex-queries
                   :def-db-interface
                   :make-quest-key
+                  :make-quest-key-from-dex
                   :make-item-key
                   :make-monster-key
                   :lang-text)
@@ -16,24 +17,30 @@
 (in-package :mh-dex.quest)
 
 (defun quest-level (level-id)
-  "Mapping the Dex level-id to its correpsonding (village?, star)
-   pair."
+  "Mapping the Dex level-id to its correpsonding (category, star)
+   pair, where category can be :v(lliage), :g(uild) or :d(lc)"
   (ecase level-id
-    (10 (list t ;; village
-              1 ));; star
-    (11 (list t 2))
-    (12 (list t 3))
-    (13 (list t 4))
-    (14 (list t 5))
-    (15 (list t 6))
-    (16 (list :false 1))
-    (17 (list :false 2))
-    (18 (list :false 3))
-    (19 (list :false 4))
-    (20 (list :false 5))
-    (21 (list :false 6))
-    (22 (list :false 7))
-    (23 (list :false 8))))
+    (10 (list :v 1))
+    (11 (list :v 2))
+    (12 (list :v 3))
+    (13 (list :v 4))
+    (14 (list :v 5))
+    (15 (list :v 6))
+    (16 (list :g 1))
+    (17 (list :g 2))
+    (18 (list :g 3))
+    (19 (list :g 4))
+    (20 (list :g 5))
+    (21 (list :g 6))
+    (22 (list :g 7))
+    (23 (list :g 8))
+    (24 (list :d 1))
+    (25 (list :d 2))
+    (26 (list :d 3))
+    (27 (list :d 4))
+    (28 (list :d 5))
+    (29 (list :d 6))
+    (30 (list :d 7))))
 
 (defparameter *location-names*
   (list (lang-text :en nil :zh "古代林" :jp "古代林")
@@ -101,6 +108,7 @@
                         (cond ((string= type "A") :a)
                               ((string= type "B") :b)
                               ((string= type "C") :c)
+                              ((string= type "D") :d)
                               (t (error "Unknown type!"))))))
 
       (loop
@@ -113,12 +121,13 @@
                      monster-1 monster-2 monster-3 monster-4
                      monster-5 monster-6 monster-7 monster-8) in quests
          do (let ((level (quest-level level-id)))
-              (assert (= (1- dex-id) id))
+              (assert (equal (make-quest-key id)
+                             (make-quest-key-from-dex dex-id)))
               (push (list :id id
                           :key (make-quest-key id)
                           :name (lang-text :en en :zh zh :jp jp)
                           :significance significance
-                          :village (car level)
+                          :category (car level)
                           :star (cadr level)
                           :iconid (1- icon-id)
                           :type (1- type)

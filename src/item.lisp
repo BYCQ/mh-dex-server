@@ -7,7 +7,7 @@
                   :def-db-interface
                   :make-item-key
                   :make-armor-key
-                  :make-quest-key
+                  :make-quest-key-from-dex
                   :make-monster-key
                   :make-jewel-key
                   :lang-text)
@@ -217,7 +217,7 @@
                     (gethash dex-id monsters-table)))
         
         (loop for (dex-quest-id dex-id) in quests
-           do (push (list :key (make-quest-key (1- dex-quest-id)))
+           do (push (list :key (make-quest-key-from-dex dex-quest-id))
                     (gethash dex-id quests-table)))
 
         (loop for (dex-id dex-location-id area approach rank)

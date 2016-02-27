@@ -12,6 +12,7 @@
              :make-item-key
              :make-weapon-key
              :make-quest-key
+             :make-quest-key-from-dex
              :make-skill-key
              :make-monster-key
              :make-jewel-key
@@ -99,6 +100,14 @@
 
 (defun make-quest-key (id)
   (format nil "~4,'0d" id))
+
+(defun make-quest-key-from-dex (dex-id)
+  "Dex has ID gap between normal quests and DLC quests. This is a hack
+   to fix it."
+  (format nil "~4,'0d" 
+          (if (<= dex-id 643)
+              (1- dex-id)
+              (- dex-id 58))))
 
 (defun make-armor-key (id)
   (format nil "~4,'0d" id))

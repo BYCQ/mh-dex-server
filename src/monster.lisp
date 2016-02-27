@@ -7,7 +7,7 @@
                   :def-db-interface
                   :make-monster-key
                   :make-item-key
-                  :make-quest-key
+                  :make-quest-key-from-dex
                   :lang-text)
     (:export :*monsters*
              :reload-monsters
@@ -97,7 +97,7 @@
          for ids in quests
          for dex-quest-id = (car ids)
          do (loop for dex-id in (rest ids)
-               do (push (list :key (make-quest-key (1- dex-quest-id)))
+               do (push (list :key (make-quest-key-from-dex dex-quest-id))
                         (gethash dex-id quests-table nil))))
 
       (loop for (dex-id dex-stat-id initial increase max duration damage) in ailments
