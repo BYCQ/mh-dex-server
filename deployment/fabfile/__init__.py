@@ -93,6 +93,7 @@ def compile_and_start():
 def deploy():
     """Entry point.
     """
+    local('ssh-add ~/.ssh/breakds-ec2-korea.pem')
     prepare_lisp()
     prepare_repo()
     update_database()
