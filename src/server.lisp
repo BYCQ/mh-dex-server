@@ -62,7 +62,7 @@
 (defparameter *initialized* nil
   "Inidicating that the server is fully initialized.")
 
-(defparameter *server-version* "88457"
+(defparameter *server-version* "88462"
   "The version of the server. Used check the staleness of the client
    data.")
 

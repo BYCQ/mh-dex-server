@@ -136,7 +136,8 @@
                           :time time
                           :items (list :a (getf (gethash dex-id items-table) :a)
                                        :b (getf (gethash dex-id items-table) :b)
-                                       :c (getf (gethash dex-id items-table) :c))
+                                       :c (getf (gethash dex-id items-table) :c)
+                                       :d (getf (gethash dex-id items-table) :d))
                           :monsters (mapcar #'make-monster-key
                                            (remove-if (lambda (x) (= x -1))
                                                       (list monster-1 monster-2 monster-3 monster-4

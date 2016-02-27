@@ -47,6 +47,7 @@
                          (:reload '(list :name "reload" :zh "装弹" :jp "リロード" :en "Reload"))
                          (:steadiness '(list :name "steadiness" :zh "摇晃" :jp "ブレ" :en "Shake"))
                          (:recoil '(list :name "recoil" :zh "后坐力" :jp "反動" :en "Recoil"))
+                         (:rapid '(list :name "rapid" :zh "速射" :jp "速射" :en "Rapid"))
                          (:attack '(list :name "attack" :zh "攻击力" :jp "攻撃" :en "Attack" :numeric t))))
                      body)))
 
@@ -112,7 +113,7 @@
                                      (list :name (lang-text :en "Light Bowgun"
                                                             :zh "轻弩"
                                                             :jp "ライトボウガン")
-                                           :columns (create-columns :name :slots :attack
+                                           :columns (create-columns :name :slots :attack :rapid
                                                                     :affinity :reload :steadiness :recoil))
                                      (list :name (lang-text :en "Heavy Bowgun"
                                                             :zh "重弩"
@@ -322,6 +323,24 @@
   (with-output-to-string (stream)
     (loop for bit in coating-list do (princ bit stream))))
 
+(defun item-to-bullet (dex-item-id)
+  (if (> dex-item-id 1000)
+      (list :inner t
+            :id (- dex-item-id 1853)
+            :level 0)
+      (let ((seq (- dex-item-id 98)))
+        (loop
+           for i = 0 then (+ i (getf bullet-type :level))
+           for bullet-id from 0
+           for bullet-type in +bullet-types+
+           when (and (>= seq i)
+                     (< (- seq i) (getf bullet-type :level)))
+           return (list :inner :false
+                        :id bullet-id
+                        :level (if (= (getf bullet-type :level) 1)
+                                   0
+                                   (1+ (- seq i))))))))
+
 (defun reload-weapons ()
   "Reload the variable *weapons* which contains all the weapon
    information."
@@ -356,11 +375,11 @@
                               (:order-by "Wpn_Type_ID" "DB_Wpn.Wpn_ID"))
                      (materials (:select "Wpn_ID" "Itm_ID" "Qty" "Type")
                                 (:from "DB_ItmtoWpn"))
-                     (bullets (:select "Wpn_ID" "Itm_ID" "LoadQty" "LoadQtyP")
+                     (bullets (:select "Wpn_ID" "Itm_ID" "LoadQty" "LoadQtyP" "SpFireQty")
                               (:from "DB_Wpn_Gun")
                               (:where "Itm_ID >= 98 AND Itm_ID <= 129")
                               (:order-by "Wpn_ID" "-Itm_ID"))
-                     (inner-bullets (:select "Wpn_ID" "Itm_ID" "LoadQty" "Max")
+                     (inner-bullets (:select "Wpn_ID" "Itm_ID" "LoadQty" "Max" "SpFireQty")
                                     (:from "DB_Wpn_Gun")
                                     (:where "Itm_ID >= 1853 AND LoadQty > 0")
                                     (:order-by "Wpn_ID" "-Itm_ID"))
@@ -372,6 +391,7 @@
     (let ((material-table (make-hash-table))
           (bullet-table (make-hash-table))
           (inner-bullet-table (make-hash-table))
+          (rapid-fire-table (make-hash-table))
           (coating-table (make-hash-table)))
       (loop for (dex-id item-id quantity type) in materials
          do (push (list :itemkey (make-item-key (1- item-id))
@@ -382,19 +402,26 @@
                         (if (equal type "P") :produce :upgrade))))
 
       ;; Create the mapping between bowgun and ordinary bullets
-      (loop for (dex-id dex-item-id load load-plus) in bullets
-         do (push (cond ((> load 0) (code-char (+ 48 load)))
-                        ((> load-plus 0) (code-char (+ 97 load-plus)))
-                        (t #\0))
-                  (gethash dex-id bullet-table nil)))
+      (loop for (dex-id dex-item-id load load-plus rapid-number) in bullets
+         do (progn (push (cond ((> load 0) (code-char (+ 48 load)))
+                               ((> load-plus 0) (code-char (+ 97 load-plus)))
+                               (t #\0))
+                         (gethash dex-id bullet-table nil))
+                   (when (> rapid-number 0)
+                     (push (item-to-bullet dex-item-id)
+                           (gethash dex-id rapid-fire-table)))))
 
       ;; Create the mapping between bowgun and inner bullets
-      (loop for (dex-id dex-item-id load quantity) in inner-bullets
-         do (push (list :id (- dex-item-id 1853)
-                        :load load
-                        :quantity quantity)
-                  (gethash dex-id inner-bullet-table nil)))
-
+      (loop for (dex-id dex-item-id load quantity rapid-number) in inner-bullets
+         do (progn (push (list :id (- dex-item-id 1853)
+                               :load load
+                               :quantity quantity)
+                         (gethash dex-id inner-bullet-table nil))
+                   (when (> rapid-number 0)
+                     ;; use +1000 encoding for inner-bullets
+                     (push (item-to-bullet dex-item-id)
+                           (gethash dex-id rapid-fire-table)))))
+      
       ;; Create coating mapping from bow to coatings.
       (loop for (dex-id dex-item-id load) in coatings
          do (push (if (plusp load) #\1 #\0)
@@ -485,6 +512,11 @@
                       (encode-bullets (gethash dex-id bullet-table)))
                 (setf (getf (car (aref *weapons* type-id)) :inners)
                       (gethash dex-id inner-bullet-table nil)))
+
+              ;; Light Bowgun
+              (when (= type-id 11)
+                (setf (getf (car (aref *weapons* type-id)) :rapid)
+                      (gethash dex-id rapid-fire-table)))
 
               ;; type-id = 13, Bow
               (when (= type-id 13)
