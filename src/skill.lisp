@@ -34,9 +34,12 @@
                      (real-skills (:select "DB_Skl.Skl_ID"
                                            ;; names: 0 = en, 1 = zh, 3 = jp
                                            "Skl_Name_0" "Skl_Name_1" "Skl_Name_3"
-                                           "SklTree_ID" "Pt" "CompSkl_ID")
+                                           "SklTree_ID" "Pt" "CompSkl_ID"
+                                           ;; descriptions: 0 = en, 1 = zh, 3 = jp
+                                           "Skl_Des_0" "Skl_Des_1" "Skl_Des_3")
                                   (:from "DB_Skl")
                                   (:inner-join "ID_Skl_Name" "DB_Skl.Skl_ID = ID_Skl_Name.Skl_ID")
+                                  (:inner-join "ID_Skl_Des" "DB_Skl.Skl_ID = ID_Skl_Des.Skl_ID")
                                   (:outer-join "DB_CompSkl" "DB_Skl.Skl_ID = DB_CompSkl.Skl_ID")
                                   (:where "SklTree_ID > 0")
                                   (:order-by "SklTree_ID" "Pt"))
@@ -62,12 +65,17 @@
                   (gethash dex-id jewels-table nil)))
 
       (loop
-         for (skill-dex-id en zh jp dex-id points composite-parent) in real-skills
+         for (skill-dex-id en zh jp dex-id points composite-parent
+                           description-en description-zh description-jp) in real-skills
          do (setf (gethash skill-dex-id skill-to-system-map) dex-id))
       
       (loop
-         for (unused en zh jp dex-id points composite-parent) in real-skills
+         for (unused en zh jp dex-id points composite-parent
+                     description-en description-zh description-jp) in real-skills
          do (push (list :name (lang-text :en en :zh zh :jp jp)
+                        :description (lang-text :en description-en
+                                                :zh description-zh
+                                                :jp description-jp)
                         :points points
                         :composite (if composite-parent
                                        (1- (gethash composite-parent skill-to-system-map))
