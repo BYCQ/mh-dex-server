@@ -83,6 +83,7 @@ def compile_and_start():
     """Compile the sbcl image.
     """
     sudo('systemctl stop mh-dex.service', quiet=True)
+    run('mkdir -p ~/bin')
     run('rm -rf ~/bin/mh-dex-server')
     with cd('~/bin'):
         run('sbcl --load ~/quicklisp/local-projects/mh-dex-server/src/build.lisp')
@@ -93,7 +94,7 @@ def compile_and_start():
 def deploy():
     """Entry point.
     """
-    local('ssh-add ~/.ssh/breakds-ec2-korea.pem')
+    local('ssh-add ~/.ssh/breakds.ec2.korea.pem')
     prepare_lisp()
     prepare_repo()
     update_database()
