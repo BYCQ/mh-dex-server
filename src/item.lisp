@@ -33,7 +33,7 @@
         (list :name (lang-text :en "Ammo"
                                :zh "弹药"
                                :jp "弾薬")
-              :range '((91 140) (1852 1892)))
+              :range '((91 140)))
         (list :name (lang-text :en "Bait"
                                :zh "虫饵"
                                :jp "虫餌")
